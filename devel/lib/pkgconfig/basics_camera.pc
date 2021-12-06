@@ -1,0 +1,8 @@
+prefix=/home/fran/camera_project_ws/devel
+
+Name: basics_camera
+Description: Description of basics_camera
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: roscpp std_msgs
