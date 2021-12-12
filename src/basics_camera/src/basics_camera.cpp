@@ -42,7 +42,7 @@ void Detection( Mat& img, CascadeClassifier& cascade)
     //generamos una deteccion de caras sobre la imagen de entrada
     cascade.detectMultiScale( smallImg, faces,1.1, 15, 0|CASCADE_SCALE_IMAGE,Size(30, 30) );
 
-    //generamos las marcas en la imagen de salida
+    //mostramos las coordenadas de la cara
     for ( size_t i = 0; i < faces.size(); i++ )
     {
         //se toma una cara
@@ -115,12 +115,12 @@ void SubAndPub(){
   //topico de imagenes de salida
   output_image_topic = "/face_detector/raw_image";
   //direccion de algoritmo de rastreo de caras
-  haar_file_face = "/data/face.xml"; 
+  haar_file_face= "/home/ubuntu/catkin_ws/src/face_tracker_pkg/src/face.xml"; 
   //booleano para abrir la ventana con la imagen original
   display_input_image = true;
   //booleano para abrir la ventana con la imagen de salida  
   display_output_image = true;
-  //tamaño maximo de la imagen?
+  //tama  o maximo de la imagen?
   screenmaxx = 640;
   //offset de la cara al centro de la imagen
   center_offset=100;
