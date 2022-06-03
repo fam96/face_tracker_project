@@ -3,6 +3,7 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include "std_msgs/Int32.h"
 
 //Open-CV headers
 #include <opencv2/imgproc/imgproc.hpp>
@@ -17,22 +18,35 @@ static const std::string OPENCV_WINDOW_1 = "face_detector";
 using namespace std;
 using namespace cv;
 
-
+ros::Publisher x_pub;
 image_transport::Subscriber image_sub_;
 image_transport::Publisher image_pub_;
 string input_image_topic, output_image_topic,haar_file_face;
 bool display_input_image, display_output_image,face_tracking;
 int screenmaxx,center_offset;
 
+void Draw(cv_bridge::CvImagePtr cv_ptr, Rect r){
+
+  Point center;
+  int radius;
+  double scale;
+  Scalar color = Scalar(255,0,255);
+  
+  center.x = cvRound((r.x + r.width*0.5)*scale);
+  center.y = cvRound((r.y + r.height*0.5)*scale);
+  radius = cvRound((r.width + r.height)*0.25*scale);
+  circle( cv_ptr->image, center, radius, color, 3, 8, 0 );
+}
+
 //funcion de deteccion de caras
-void Detection( Mat& img, CascadeClassifier& cascade)
+void Detection( cv_bridge::CvImagePtr cv_ptr, CascadeClassifier& cascade)
 {
     double t = 0;
     double scale = 1;
     vector<Rect> faces, faces2;
     Mat gray, smallImg;
     //convierte la imagen de colores a escala de grises
-    cvtColor( img, gray, COLOR_BGR2GRAY );
+    cvtColor( cv_ptr->image, gray, COLOR_BGR2GRAY );
     double fx = 1 / scale ;
     //redimensionamos la imagen con una interpolacion bilineal
     resize( gray, smallImg, Size(), fx, fx, INTER_LINEAR );
@@ -41,7 +55,6 @@ void Detection( Mat& img, CascadeClassifier& cascade)
 
     //generamos una deteccion de caras sobre la imagen de entrada
     cascade.detectMultiScale( smallImg, faces,1.1, 15, 0|CASCADE_SCALE_IMAGE,Size(30, 30) );
-
     //mostramos las coordenadas de la cara
     for ( size_t i = 0; i < faces.size(); i++ )
     {
@@ -49,15 +62,17 @@ void Detection( Mat& img, CascadeClassifier& cascade)
         Rect r = faces[i];
         int x,y;
 
-        double aspect_ratio = (double)r.width/r.height;
+        x = cvRound((r.x + r.width*0.5)*scale);
+        y = cvRound((r.y + r.height*0.5)*scale);
+        if(i==0){
+          std_msgs::Int32 msg;
 
-        if( 0.75 < aspect_ratio && aspect_ratio < 1.3 )
-        {
-          x = cvRound((r.x + r.width*0.5)*scale);
-          y = cvRound((r.y + r.height*0.5)*scale);
-
-          ROS_INFO("X: %d - Y: %d - Face: %d",x,y,i);
+          msg.data=x;
+          x_pub.publish(msg);
         }
+        ROS_INFO("X: %d - Y: %d - Face: %d",x,y,i);
+
+        Draw(cv_ptr,r);
     }
 }
 
@@ -92,7 +107,7 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg){
 	  if (display_input_image == true){
 	    imshow("Input Image", cv_ptr->image);
 	  }
-    Detection(cv_ptr->image,cascade);
+    Detection(cv_ptr,cascade);
     //Mostrar la imagen de salida en una ventana
     if (display_output_image == true){
     	imshow( "Output Image", cv_ptr->image);
@@ -106,7 +121,6 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg){
 
 //funcion de suscripcion y publicacion de topicos y carga de parametros
 void SubAndPub(){
-  
   ros::NodeHandle nh_;
   image_transport::ImageTransport it_(nh_);
 
@@ -115,13 +129,13 @@ void SubAndPub(){
   //topico de imagenes de salida
   output_image_topic = "/face_detector/raw_image";
   //direccion de algoritmo de rastreo de caras
-  haar_file_face= "/home/ubuntu/catkin_ws/src/face_tracker_pkg/src/face.xml"; 
+  haar_file_face= "/home/ubuntu/catkin_ws/src/basics_camera/data/face.xml"; 
   //booleano para abrir la ventana con la imagen original
-  display_input_image = true;
+  display_input_image = false;
   //booleano para abrir la ventana con la imagen de salida  
   display_output_image = true;
-  //tama  o maximo de la imagen?
-  screenmaxx = 640;
+  //tamano maximo de la imagen
+  screenmaxx = 1280;
   //offset de la cara al centro de la imagen
   center_offset=100;
 
@@ -133,10 +147,8 @@ void SubAndPub(){
     nh_.getParam("display_tracking_image", display_output_image);
     nh_.getParam("center_offset", center_offset);
     nh_.getParam("screenmaxx", screenmaxx);
-
     nh_.getParam("haar_file_face", haar_file_face);
-    nh_.getParam("face_tracking", face_tracking);
-    
+  
 
     ROS_INFO("Successfully Loaded tracking parameters");
   }
@@ -150,7 +162,8 @@ void SubAndPub(){
   image_sub_ = it_.subscribe(input_image_topic, 1, imageCb);
   //Publicamos el topico de la imagen de salida
   image_pub_ = it_.advertise(output_image_topic, 1);
-
+  //Publicamos el topico de la posicion x de la cara detectada
+  x_pub = nh_.advertise<std_msgs::Int32>("/x_position",10);
 }
 
 int main(int argc, char** argv)

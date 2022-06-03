@@ -1,2 +1,2 @@
-basics_camera:face_tracker_pkg
+basics_camera:stepper_control
 -DCATKIN_DEVEL_PREFIX=/home/fran/camera_project_ws/devel -DCMAKE_INSTALL_PREFIX=/home/fran/camera_project_ws/install -G Unix Makefiles

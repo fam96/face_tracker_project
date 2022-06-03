@@ -1,0 +1,8 @@
+image_input_topic: "/raspicam_node/image"
+face_detected_image_topic: "/face_detector/raw_image"
+haar_file_face: "/home/robot/ros_robotics_projects_ws/src/basics_camera/data/face.xml"
+screenmaxx: 1280
+center_offset: 100
+display_original_image: false
+display_tracking_image: true
+ 

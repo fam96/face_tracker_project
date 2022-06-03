@@ -131,8 +131,8 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/fran/camera_project_ws/build/gtest/cmake_install.cmake")
+  include("/home/fran/camera_project_ws/build/stepper_control/cmake_install.cmake")
   include("/home/fran/camera_project_ws/build/basics_camera/cmake_install.cmake")
-  include("/home/fran/camera_project_ws/build/face_tracker_pkg/cmake_install.cmake")
 
 endif()
 
